@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spin & Win</title>
+<style>
+    body {
+        font-family: 'Arial', sans-serif;
+        text-align: center;
+        margin: 0;
+        padding: 0;
+        background: linear-gradient(135deg, #74ebd5, #ACB6E5);
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+    h1 {
+        color: #fff;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.4);
+    }
+    .wheel-container {
+        position: relative;
+        width: 300px;
+        height: 300px;
+        margin: 20px auto;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        border-radius: 50%;
+        background: #fff;
+    }
+    canvas {
+        border-radius: 50%;
+    }
+    .pointer {
+        position: absolute;
+        top: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0; 
+        height: 0; 
+        border-left: 15px solid transparent;
+        border-right: 15px solid transparent;
+        border-bottom: 30px solid yellow;
+    }
+    #center {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 60px;
+        height: 60px;
+        background: black;
+        border-radius: 50%;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    }
+    .btn {
+        display: inline-block;
+        padding: 12px 25px;
+        margin: 10px;
+        border: none;
+        border-radius: 30px;
+        font-size: 18px;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+    }
+    .spin-btn {
+        background: #28a745;
+        color: white;
+        font-weight: bold;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+    .claim-btn {
+        background: #28a745;
+        color: white;
+        font-weight: bold;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+    .join-btn {
+        background: #007bff;
+        color: white;
+        width: 120px;
+        font-weight: bold;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+    .withdraw-btn {
+        background: lightgray;
+        color: white;
+        cursor: not-allowed;
+        font-weight: bold;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+    .withdraw-btn.active {
+        background: darkgreen;
+        cursor: pointer;
+    }
+    input {
+        padding: 10px;
+        margin-top: 10px;
+        width: 220px;
+        border-radius: 20px;
+        border: 1px solid #ccc;
+        outline: none;
+        text-align: center;
+    }
+    #resultMsg {
+        color: #fff;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        margin-top: 20px;
+    }
+</style>
+</head>
+<body>
+
+<h1>Spin & Win</h1>
+
+<div class="wheel-container" id="wheelSection">
+    <canvas id="wheel" width="300" height="300"></canvas>
+    <div class="pointer"></div>
+    <div id="center"></div>
+</div>
+
+<button id="spinBtn" class="btn spin-btn">Spin</button>
+
+<h2 id="resultMsg" style="display:none;"></h2>
+<button id="claimBtn" class="btn claim-btn" style="display:none;">Claim Reward</button>
+
+<div id="joinPage" style="display:none;">
+    <h2 style="color:#fff; text-shadow:2px 2px 4px rgba(0,0,0,0.5)">Join All to Withdraw</h2>
+    <div id="joinButtons"></div>
+    <br>
+    <input type="text" id="upiInput" placeholder="Enter UPI ID" disabled>
+    <br>
+    <button id="withdrawBtn" class="btn withdraw-btn">Withdraw</button>
+</div>
+
+<script>
+const wheelCanvas = document.getElementById('wheel');
+const ctx = wheelCanvas.getContext('2d');
+
+const amounts = ['₹10', '₹20', '₹30', '₹50', '₹70', '₹100', '₹150', '₹200'];
+const colors = ['#ff4d4d', '#4dff88', '#4d88ff', '#ffff66', '#ff66ff', '#66ffff', '#ffb84d', '#804dff'];
+const numSegments = amounts.length;
+const segAngle = 2 * Math.PI / numSegments;
+
+function drawWheel() {
+    for (let i = 0; i < numSegments; i++) {
+        ctx.beginPath();
+        ctx.moveTo(150, 150);
+        ctx.arc(150, 150, 150, i * segAngle, (i + 1) * segAngle);
+        ctx.fillStyle = colors[i];
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.save();
+        ctx.translate(150, 150);
+        ctx.rotate(i * segAngle + segAngle / 2);
+        ctx.textAlign = "right";
+        ctx.fillStyle = "black";
+        ctx.font = "bold 16px Arial";
+        ctx.fillText(amounts[i], 140, 5);
+        ctx.restore();
+    }
+}
+drawWheel();
+
+document.getElementById('spinBtn').addEventListener('click', spinWheel);
+
+function spinWheel() {
+    let wheel = document.getElementById('wheel');
+    wheel.style.transition = "transform 3s ease-out";
+    const targetIndex = Math.floor(Math.random() * numSegments);
+    const prize = amounts[targetIndex];
+    const degPerSegment = 360 / numSegments;
+    const stopAngle = 360 - (targetIndex * degPerSegment + degPerSegment / 2);
+    wheel.style.transform = `rotate(${stopAngle + 1440}deg)`;
+    setTimeout(() => {
+        document.getElementById('resultMsg').textContent = `🎉 Congratulations, you won ${prize}!`;
+        document.getElementById('resultMsg').style.display = 'block';
+        document.getElementById('claimBtn').style.display = 'inline-block';
+        document.getElementById('spinBtn').style.display = 'none';
+    }, 3000);
+}
+
+document.getElementById('claimBtn').addEventListener('click', () => {
+    document.getElementById('wheelSection').style.display = 'none';
+    document.getElementById('resultMsg').style.display = 'none';
+    document.getElementById('claimBtn').style.display = 'none';
+    document.getElementById('joinPage').style.display = 'block';
+    generateJoinButtons();
+});
+
+function generateJoinButtons() {
+    let container = document.getElementById('joinButtons');
+    container.innerHTML = '';
+
+    // Define links for each join button
+    const joinLinks = [
+        'https://t.me/+fMLp5uCo_845NzY1',
+        'https://example.com/2',
+        'https://example.com/3',
+        'https://example.com/4',
+        'https://example.com/5',
+        'https://example.com/6',
+        'https://example.com/7',
+        'https://example.com/8',
+        'https://example.com/9',
+        'https://example.com/10'
+    ];
+
+    for (let i = 0; i < 10; i++) {
+        let btn = document.createElement('button');
+        btn.className = 'btn join-btn';
+        btn.textContent = 'Join ' + (i + 1);
+        btn.addEventListener('click', function() {
+            // Open respective link immediately
+            window.open(joinLinks[i], '_blank');
+            // Disable button after click
+            btn.style.background = 'gray';
+            btn.disabled = true;
+            checkAllJoined();
+        });
+        container.appendChild(btn);
+    }
+}
+
+function checkAllJoined() {
+    let all = [...document.querySelectorAll('.join-btn')].every(b => b.disabled);
+    if (all) {
+        let withdrawBtn = document.getElementById('withdrawBtn');
+        withdrawBtn.classList.add('active');
+        withdrawBtn.disabled = false;
+        document.getElementById('upiInput').disabled = false;
+
+        // Optional: automatically open link when all joined
+        // window.open('https://example.com/final-reward', '_blank');
+    }
+}
+
+document.getElementById('withdrawBtn').addEventListener('click', () => {
+    if (document.getElementById('withdrawBtn').classList.contains('active')) {
+        alert('Withdrawal Successful!');
+    } else {
+        alert('Join all channels first!');
+    }
+});
+</script>
+
+</body>
+</html>
